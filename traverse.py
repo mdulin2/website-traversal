@@ -146,7 +146,6 @@ Args:
     website_base(int/string): if the base of the website is the same as the website being called it's 0.
                         any other string otherwise
 """
-
 def run_traversal(website,throughput,depth, website_base = 0):
     global full_list,map_dict,reference_dict,iteration,resets
     full_list = list()
@@ -158,7 +157,73 @@ def run_traversal(website,throughput,depth, website_base = 0):
     if(website_base == 0):
         website_base = website
     call(website,website_base,0,throughput,0,depth)
-    traverse_tree(0,0,1)
+    #traverse_tree(0,0,1)
+
+"""
+The recursive function for making the mapped page.
+Args:
+    child(int): the ID of the child node being called
+    parent(int): the parent of which the child came from
+Returns:
+    totalString(html code): the entire main file, where all of the iFrames end up.
+"""
+def display_rec(child,parent):
+
+    #ending case; no more children in line
+    if(map_dict[child] == []):
+        make_frame(child)
+        return get_frame_code(parent,child)
+
+    #breath first search iteration
+    totalString = ""
+    for spot in map_dict[child]:
+        make_frame(spot)
+        totalString += get_frame_code(child,spot)
+
+    #the recursive call, breath first
+    for item in map_dict[child]:
+        totalString+= display_rec(item,child)
+    return totalString
+
+"""
+Gets the code for the frame for the main file
+Args:
+    parent(int): the parent that called the name, or child
+    name(int): the child node being called
+Returns:
+    html_doc_tmp(html code): The iFrame reference in the main file
+"""
+def get_frame_code(parent,name):
+
+        html_doc_tmp = """
+        Page of: %s Child of: %s
+        <iframe src = "%s" width = "200" height = "200">
+        </iframe>
+
+       """ % (reference_dict[name],reference_dict[parent],str(name)+".html")
+        return html_doc_tmp
+
+"""
+Create the html page for the iFrame
+Args:
+    name(int): the reference_dict ID of the URL
+"""
+def make_frame(name):
+
+    #source = str(url.encode('UTF-8'))
+    r = requests.get(reference_dict[name])
+    site = str(r.text.encode('UTF-8'))
+    f = open("visual/"+str(name)+ ".html",'w')
+    f.write(site)
+    f.close()
 
 if __name__ == "__main__":
+    global reference_dict
     run_traversal("https://moxie.org",True,3)
+    #traverse_tree(0,0,1) # a full tree, indented traversal
+
+    reference_dict[0] = "https://moxie.org"
+    total_file = display_rec(0,0)
+    f = open("visual/"+str("max")+ ".html",'w')
+    f.write(total_file)
+    f.close()

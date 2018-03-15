@@ -25,8 +25,7 @@ Possibly add a login functionality here?
 //TODO
 -Add a login functionality for forms on the page...
   Would add an insane amount usability!
--Make it look nicer? The traverser works! But, it looks horrible in the process!
--Take out ALL directories in the page for viewingf
+-Take out ALL directories in the page for viewing
 """
 """
 traverses a website that doesn't require authentication
@@ -132,7 +131,7 @@ Args:
     spot: the amount of depth in the tree
     mode: the type of display- 1 for tree numbers, anything else for URLs.
 """
-def traverse_tree(key,spot,mode):
+def traverse_tree_helper(key,spot,mode):
     tabs = ""
     for i in range(spot):
         tabs += '\t'
@@ -142,7 +141,7 @@ def traverse_tree(key,spot,mode):
             print tabs + reference_dict[item]
         else:
             print tabs + str(item)
-        traverse_tree(item,spot+1,mode)
+        traverse_tree_helper(item,spot+1,mode)
 
 """
 Runs a full traverse of the website
@@ -164,7 +163,6 @@ def run_traversal(website,throughput,depth, website_base = 0):
     if(website_base == 0):
         website_base = website
     call(website,website_base,0,throughput,0,depth)
-    #traverse_tree(0,0,1)
 
 """
 The recursive function for making the mapped page.
@@ -178,19 +176,14 @@ def display_rec(child,parent):
 
     #ending case; no more children in line
     if(map_dict[child] == []):
-        make_pic(child)
-        return get_pic_code(parent,child)
-        #make_frame_html(child)
-        #return get_frame_code(parent,child)
+        make_frame_html(child)
+        return get_frame_code(parent,child)
 
     #breath first search iteration
     totalString = ""
     for spot in map_dict[child]:
-        make_pic(child)
-
-        totalString += get_pic_code(child,spot)
-        #make_frame_html(spot)
-        #totalString += get_frame_code(child,spot)
+        make_frame_html(spot)
+        totalString += get_frame_code(child,spot)
 
     #the recursive call, breath first
     for item in map_dict[child]:
@@ -241,13 +234,23 @@ def make_frame_html(name):
 def make_pic(name):
     imgkit.from_url(reference_dict[name], str(name)+".jpg")
 
-if __name__ == "__main__":
-    global reference_dict
-    run_traversal("https://moxie.org",True,2)
-    #traverse_tree(0,0,1) # a full tree, indented traversal
-
-    reference_dict[0] = "https://moxie.org"
+def display_into_file(file_name):
+    print "Outputting the html pages to a file..."
+    #prints out the pages onto an unformatted html document, all in iframes.
+    reference_dict[0] = base_website #otherwise, the reference_dict will break
     total_file = display_rec(0,0)
-    f = open("visual/"+str("max")+ ".html",'w')
+    f = open("visual/"+str(file_name)+ ".html",'w')
     f.write(total_file)
     f.close()
+    print "Output to " +str(name) + ".html finished..."
+
+def traverse_tree():
+    traverse_tree_helper(0,0,1)
+
+if __name__ == "__main__":
+    global reference_dict
+    base_website = "https://moxie.org"
+    run_traversal(base_website,False,3) #runs all of the actual scrapping
+
+    traverse_tree() #prints a map of the tree of the website
+    #display_into_file(0,0)

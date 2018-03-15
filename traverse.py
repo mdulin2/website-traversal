@@ -1,4 +1,4 @@
-
+import imgkit
 import requests
 import re
 import time
@@ -21,6 +21,13 @@ It can get the links in no order or in a recursive tree.
 Possibly add a login functionality here?
 """
 
+"""
+//TODO
+-Add a login functionality for forms on the page...
+  Would add an insane amount usability!
+-Make it look nicer? The traverser works! But, it looks horrible in the process!
+-Take out ALL directories in the page for viewingf
+"""
 """
 traverses a website that doesn't require authentication
 Args:
@@ -171,14 +178,19 @@ def display_rec(child,parent):
 
     #ending case; no more children in line
     if(map_dict[child] == []):
-        make_frame(child)
-        return get_frame_code(parent,child)
+        make_pic(child)
+        return get_pic_code(parent,child)
+        #make_frame_html(child)
+        #return get_frame_code(parent,child)
 
     #breath first search iteration
     totalString = ""
     for spot in map_dict[child]:
-        make_frame(spot)
-        totalString += get_frame_code(child,spot)
+        make_pic(child)
+
+        totalString += get_pic_code(child,spot)
+        #make_frame_html(spot)
+        #totalString += get_frame_code(child,spot)
 
     #the recursive call, breath first
     for item in map_dict[child]:
@@ -203,12 +215,20 @@ def get_frame_code(parent,name):
        """ % (reference_dict[name],reference_dict[parent],str(name)+".html")
         return html_doc_tmp
 
+def get_pic_code(parent,name):
+
+    html_doc_tmp = """
+    Page of: %s Child of: %s
+    <img src = "%s" width = "200" height = "200">
+   """ % (reference_dict[name],reference_dict[parent],str(name)+".jpg")
+    return html_doc_tmp
+
 """
 Create the html page for the iFrame
 Args:
     name(int): the reference_dict ID of the URL
 """
-def make_frame(name):
+def make_frame_html(name):
 
     #source = str(url.encode('UTF-8'))
     r = requests.get(reference_dict[name])
@@ -217,9 +237,13 @@ def make_frame(name):
     f.write(site)
     f.close()
 
+#creates the picture to be made
+def make_pic(name):
+    imgkit.from_url(reference_dict[name], str(name)+".jpg")
+
 if __name__ == "__main__":
     global reference_dict
-    run_traversal("https://moxie.org",True,3)
+    run_traversal("https://moxie.org",True,2)
     #traverse_tree(0,0,1) # a full tree, indented traversal
 
     reference_dict[0] = "https://moxie.org"

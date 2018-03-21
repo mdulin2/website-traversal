@@ -3,6 +3,9 @@ import requests
 import re
 import time
 import sys
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 #the list that is discovered
 global full_list
 #the hiearchy of the children
@@ -230,10 +233,6 @@ def make_frame_html(name):
     f.write(site)
     f.close()
 
-#creates the picture to be made
-def make_pic(name):
-    imgkit.from_url(reference_dict[name], str(name)+".jpg")
-
 def display_into_file(file_name):
     print "Outputting the html pages to a file..."
     #prints out the pages onto an unformatted html document, all in iframes.
@@ -251,6 +250,4 @@ if __name__ == "__main__":
     global reference_dict
     base_website = "https://moxie.org"
     run_traversal(base_website,False,3) #runs all of the actual scrapping
-
     traverse_tree() #prints a map of the tree of the website
-    #display_into_file(0,0)

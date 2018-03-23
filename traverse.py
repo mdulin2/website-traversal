@@ -17,6 +17,8 @@ global iteration
 #how many total requests have been made
 global resets
 
+global s
+
 """
 ILY
 This is a website mapper. It goes through and finds all of the links in the project!
@@ -38,6 +40,7 @@ Args:
     amount: the amount of traverses to make
     whos: True, include only the domains addresses. False otherwise
     name: the current nodes name on the reference_dict
+    depth: the amount of depth the recursiveness will go
 """
 def call(url,base,amount,whos,name,depth):
     global iteration
@@ -55,9 +58,14 @@ def call(url,base,amount,whos,name,depth):
         reference_dict[name] = url
         return
 
+    #need to login in before we use a particular request inside the web deeper
+    login(0,0)
+
     #getting the page
     source = str(url.encode('UTF-8'))
-    r = requests.get(source)
+    cookies = s.cookies.get_dict()
+    cookies["accessibility"] = "true"
+    r = s.get(source, cookies = cookies)
     site = str(r.text.encode('UTF-8'))
 
     #regular expression for finding all links!
@@ -78,7 +86,6 @@ def call(url,base,amount,whos,name,depth):
             lst.append(iteration)
             map_dict[name] = lst
             reference_dict[iteration] = item
-
         #recursive call
         call(item,base,amount,whos,iteration,depth)
 
@@ -93,7 +100,7 @@ def init_address(match,base):
         if(post[0] == '/'):
             tmp = post
             new_list.add(base + tmp)
-        elif(post[0]!= 'h'):
+        elif(post[0:4]!= 'http'):
             new_list.add(base + "/"+  post)
 
         #could have a process to check for all things to check for...
@@ -126,6 +133,9 @@ def flatten(container):
                 yield j
         else:
             yield i
+#traverses throught the tree made.
+def traverse_tree():
+    traverse_tree_helper(0,0,1)
 
 #recursively prints the map of a website
 """
@@ -152,7 +162,7 @@ Args:
     website(string): this is just a url for the site
     throughput(bool): True if just wanting the links on the website, False if you want all links
     depth(int): the depth that the tree will go
-    website_base(int/string): if the base of the website is the same as the website being called it's 0.
+    optional:::::website_base(int/string): if the base of the website is the same as the website being called it's 0.
                         any other string otherwise
 """
 def run_traversal(website,throughput,depth, website_base = 0):
@@ -165,6 +175,7 @@ def run_traversal(website,throughput,depth, website_base = 0):
 
     if(website_base == 0):
         website_base = website
+    #print website_base
     call(website,website_base,0,throughput,0,depth)
 
 """
@@ -243,11 +254,35 @@ def display_into_file(file_name):
     f.close()
     print "Output to " +str(name) + ".html finished..."
 
-def traverse_tree():
-    traverse_tree_helper(0,0,1)
+
+
+#have to custom make this per website...currently set up for zagweb.gonzaga.edu
+#logs in the user with their user and pin
+def login(user,pin):
+    global s
+
+    #need to fill these in if you want it to work. I hardcoded them just for convience
+    user = ""
+    pin = ""
+    cookies = {'TESTID': 'set', 'BIGipServerPOOL_ssb-prod': '738451091.28195.0000'}
+
+    #runs the web request
+    res = s.post("https://zagweb.gonzaga.edu/pls/gonz/twbkwbis.P_ValLogin",data = "PIN=" + str(pin) +"&sid="+ user, cookies=cookies,verify=False)
+    #print s.cookies.get_dict()
+    res = s.post("https://zagweb.gonzaga.edu/pls/gonz/twbkwbis.P_GenMenu?name=bmenu.P_MainMnu&msg=WELCOME+%3Cb%3EHello+Maxwell+J.+Dulin.%3Cbr%3EWelcome+to+Zagweb+-+Gonzaga+University%27s+Web+Information+System%3C%2Fb%3E21-MAR-201812%3A05pm", cookies = {"accessibility":"true"})
+
+    #s.post(res)
+    return res.text.encode('utf-8')
 
 if __name__ == "__main__":
     global reference_dict
-    base_website = "https://moxie.org"
-    run_traversal(base_website,False,3) #runs all of the actual scrapping
+    global s
+    s = requests.Session()
+
+    #the main domain
+    base_website = "https://zagweb.gonzaga.edu"
+    #the initial page to look at
+    website = "https://zagweb.gonzaga.edu/pls/gonz/twbkwbis.P_GenMenu?name=bmenu.P_MainMnu&msg=WELCOME+%3Cb%3EHello+Maxwell+J.+Dulin.%3Cbr%3EWelcome+to+Zagweb+-+Gonzaga+University%27s+Web+Information+System%3C%2Fb%3E21-MAR-201812%3A05pm"
+
+    run_traversal(website,False,13,website_base = base_website) #runs all of the actual scrapping
     traverse_tree() #prints a map of the tree of the website
